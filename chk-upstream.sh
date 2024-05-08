@@ -12,7 +12,8 @@
 #           -> reads git repository and pacman package name from arguments
 #           -> gets git upstream version
 #           -> compares version and display result
-#
+#     v1.1  -> renamed to chk-upstream (formally chk_pkg_upstream)
+#           -> added command line parameter `--git` and `--pacman`#
 
 program_version="1.0"
 git_repository=""
@@ -54,12 +55,12 @@ display_results()
 
 display_usage()
 {
-printf "\n${bold}chk_pkg_upstream${clear} retrieves an upstream version and compares it against a pacman package version\n\n"
+printf "\n${bold}chk-upstream${clear} retrieves an upstream version and compares it against a pacman package version\n\n"
 printf "Version: $program_version\n\n"
-printf "Usage: chk_pkg_upstream -g git_repository_name -p package_name\n"
-printf "   or: chk_pkg_upstream --git git_repository_name --pacman package_name\n"
-printf "   or: chk_pkg_upstream -h\n"
-printf "   or: chk_pkg_upstream --help\n\n"
+printf "Usage: chk-upstream -g git_repository_name -p package_name\n"
+printf "   or: chk-upstream --git git_repository_name --pacman package_name\n"
+printf "   or: chk-upstream -h\n"
+printf "   or: chk-upstream --help\n\n"
 }
 
 verify_parameters()
@@ -82,10 +83,10 @@ i=$(($#-1))
 while [ $i -ge 0 ];
 do
   case ${BASH_ARGV[$i]} in
-       -g) i=$((i-1))
+       -g|--git) i=$((i-1))
            git_repository=${BASH_ARGV[$i]}
            ;;
-       -p) i=$((i-1))
+       -p|--pacman) i=$((i-1))
            package_name=${BASH_ARGV[$i]}
            ;;
        -h|--help)
