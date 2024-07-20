@@ -14,6 +14,8 @@
 #           -> compares version and display result
 #     v1.1  -> renamed to chk-upstream (formally chk_pkg_upstream)
 #           -> added command line parameter `--git` and `--pacman`#
+#     v1.2  -> added command line parameter '-s' & '--string': the string will be
+#              compared against the pacman package version
 
 program_version="1.0"
 git_repository=""
@@ -28,11 +30,13 @@ clear='\033[0m'
 
 get_version_strings()
 {
-  git_ver=$(gh release view -R $git_repository 2> /dev/null)
-  if [ $? -eq 0 ]; then
-    git_ver=$(echo $git_ver | grep -o "tag: [a-z0-9._-]*" | cut -d" " -f2);
-  else
-    git_ver="repository not found";
+  if [[ -n $git_repository ]]; then
+    git_ver=$(gh release view -R $git_repository 2> /dev/null)
+    if [ $? -eq 0 ]; then
+      git_ver=$(echo $git_ver | grep -o "tag: [a-z0-9._-]*" | cut -d" " -f2);
+    else
+      git_ver="repository not found";
+    fi
   fi
 
   pacman_ver=$(pacman -Q $package_name 2>/dev/null)
@@ -45,12 +49,21 @@ get_version_strings()
 
 display_results()
 {
-  if [[ $pacman_ver =~ $git_ver ]]; then
+  #printf "$string_ver"
+  if [[ -n $string_name ]]; then
+    cmp_ver=$string_name
+    src=string
+  else
+    cmp_ver=$git_ver
+    src=git
+  fi
+
+  if [[ $pacman_ver =~ $cmp_ver ]]; then
     printf "${bg_green_bold}package: $package_name   ${bg_green}"
   else
     printf "${bg_red_bold}package: $package_name   ${bg_red}"
   fi
-  printf "git: $git_ver, pacman: $pacman_ver${clear}\n"
+  printf "$src: $cmp_ver, pacman: $pacman_ver${clear}\n"
 }
 
 display_usage()
@@ -59,13 +72,15 @@ printf "\n${bold}chk-upstream${clear} retrieves an upstream version and compares
 printf "Version: $program_version\n\n"
 printf "Usage: chk-upstream -g git_repository_name -p package_name\n"
 printf "   or: chk-upstream --git git_repository_name --pacman package_name\n"
+printf "   or: chk-upstream -s string -p package_name\n"
 printf "   or: chk-upstream -h\n"
 printf "   or: chk-upstream --help\n\n"
 }
 
 verify_parameters()
 {
-if [[ -z $git_repository ]]; then
+if [[ -z $git_repository ]] && [[ -z $string_name ]]; then
+  printf "test"
   printf "provide a git repository\n\n"
   display_usage
   exit 2
@@ -88,6 +103,9 @@ do
            ;;
        -p|--pacman) i=$((i-1))
            package_name=${BASH_ARGV[$i]}
+           ;;
+       -s|--string) i=$((i-1))
+           string_name=${BASH_ARGV[$i]}
            ;;
        -h|--help)
            display_usage
